@@ -4,7 +4,7 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-//middleware
+//middleware // I changed my folder name, Im checking it it working or not
 app.use(cors());
 app.use(express.json());
 
