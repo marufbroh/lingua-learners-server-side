@@ -59,10 +59,12 @@ async function run() {
     // all collection
     const usersCollection = client.db("linguaDB").collection("users");
     const classesCollection = client.db("linguaDB").collection("classes");
-    const bookedClassesCollection = client.db("linguaDB").collection("bookedClasses");
+    const bookedClassesCollection = client
+      .db("linguaDB")
+      .collection("bookedClasses");
     const paymentCollection = client.db("linguaDB").collection("payment");
 
-    // JWT
+    // JWT generate
     app.post("/jwt", async (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
@@ -71,6 +73,7 @@ async function run() {
       res.send({ token });
     });
 
+    // is user Admin or not middleware
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email };
@@ -83,6 +86,7 @@ async function run() {
       next();
     };
 
+    // is user Instructor or not middleware
     const verifyInstructor = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email };
@@ -95,8 +99,14 @@ async function run() {
       next();
     };
 
-
     // user related apis
+    // show user for just Admin
+    app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+
+    // create user and send to database
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -105,6 +115,34 @@ async function run() {
         return res.send({ message: "user already exist" });
       }
       const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    // is admin true or false
+    app.get("/users/admin/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        return res.send({ admin: false });
+      }
+
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const result = { admin: user?.role === "admin" };
+      res.send(result);
+    });
+
+    // is instructor true or false
+    app.get("/users/instructor/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        return res.send({ instructor: false });
+      }
+
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const result = { instructor: user?.role === "instructor" };
       res.send(result);
     });
 
