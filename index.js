@@ -58,6 +58,9 @@ async function run() {
 
     // all collection
     const usersCollection = client.db("linguaDB").collection("users");
+    const classesCollection = client.db("linguaDB").collection("classes");
+    const bookedClassesCollection = client.db("linguaDB").collection("bookedClasses");
+    const paymentCollection = client.db("linguaDB").collection("payment");
 
     // JWT
     app.post("/jwt", async (req, res) => {
@@ -68,13 +71,26 @@ async function run() {
       res.send({ token });
     });
 
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== "admin") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+      next();
+    };
+
+
     // user related apis
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
       const existingUser = await usersCollection.findOne(query);
       if (existingUser) {
-        return res.send({ message: "User already exist" });
+        return res.send({ message: "user already exist" });
       }
       const result = await usersCollection.insertOne(user);
       res.send(result);
