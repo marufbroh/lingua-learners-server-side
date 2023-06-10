@@ -119,6 +119,13 @@ async function run() {
       res.send(result);
     });
 
+    // Instructor related apis, get instractors data
+    app.get("/users/instructors", async (req, res) => {
+      const query = { role: "instructor" };
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+
     // create user and send to database
     app.post("/users", async (req, res) => {
       const user = req.body;
@@ -208,13 +215,6 @@ async function run() {
       res.send(result);
     });
 
-    // Instructor related apis
-    app.get("/users/instructors", async (req, res) => {
-      const query = { role: "instructor" };
-      const result = await usersCollection.find(query).toArray();
-      res.send(result);
-    });
-
     // selected class related apis
     app.post(
       "/selected-classess",
@@ -226,6 +226,26 @@ async function run() {
         res.send(result);
       }
     );
+
+    // get selected classes data by email
+    app.get("/selected-classess", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      console.log(email);
+      if (!email) {
+        return res.send([]);
+      }
+
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+
+      const query = { student_email: email };
+      const result = await selectedClassesCollection.find(query).toArray();
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
