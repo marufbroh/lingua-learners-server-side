@@ -215,6 +215,18 @@ async function run() {
       res.send(result);
     });
 
+    // selected class related apis
+    app.post(
+      "/selected-classess",
+      verifyJWT,
+      verifyStudent,
+      async (req, res) => {
+        const selectedClass = req.body;
+        const result = await selectedClassesCollection.insertOne(selectedClass);
+        res.send(result);
+      }
+    );
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
