@@ -99,6 +99,19 @@ async function run() {
       next();
     };
 
+    // is user Student or not middleware
+    const verifyStudent = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== "student") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+      next();
+    };
+
     // user related apis
     // show user for just Admin
     app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
@@ -146,6 +159,20 @@ async function run() {
       res.send(result);
     });
 
+    // is student true or false
+    app.get("/users/student/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        return res.send({ student: false });
+      }
+
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const result = { student: user?.role === "student" };
+      res.send(result);
+    });
+
     // Admin make instructor api
     app.patch("/users/instructor/:id", async (req, res) => {
       const id = req.params.id;
@@ -182,7 +209,7 @@ async function run() {
     });
 
     // Instructor related apis
-    app.get("/user/instructor", async (req, res) => {
+    app.get("/users/instructors", async (req, res) => {
       const query = { role: "instructor" };
       const result = await usersCollection.find(query).toArray();
       res.send(result);
