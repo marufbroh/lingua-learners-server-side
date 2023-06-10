@@ -59,9 +59,9 @@ async function run() {
     // all collection
     const usersCollection = client.db("linguaDB").collection("users");
     const classesCollection = client.db("linguaDB").collection("classes");
-    const bookedClassesCollection = client
+    const selectedClassesCollection = client
       .db("linguaDB")
-      .collection("bookedClasses");
+      .collection("selectedClasses");
     const paymentCollection = client.db("linguaDB").collection("payment");
 
     // JWT generate
@@ -171,6 +171,20 @@ async function run() {
       };
 
       const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    // classes related apis
+    // get all classes
+    app.get("/classes", async (req, res) => {
+      const result = await classesCollection.find().toArray();
+      res.send(result);
+    });
+
+    // Instructor related apis
+    app.get("/user/instructor", async (req, res) => {
+      const query = { role: "instructor" };
+      const result = await usersCollection.find(query).toArray();
       res.send(result);
     });
 
