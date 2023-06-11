@@ -260,6 +260,7 @@ async function run() {
     // create payment intent
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const { price } = req.body;
+      // console.log(price)
       const amount = price * 100;
       // Create a PaymentIntent with the order amount and currency
       const paymentIntent = await stripe.paymentIntents.create({
@@ -271,6 +272,18 @@ async function run() {
       res.send({
         clientSecret: paymentIntent.client_secret,
       });
+    });
+
+    // payment related api
+    app.post("/payments", verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const insertResult = await paymentCollection.insertOne(payment);
+
+      const query = {_id: selectedClassDbID}
+      
+
+      const deleteResult = await selectedClassesCollection.deleteOne(query);
+      res.send({ insertResult, deleteResult });
     });
 
     // Send a ping to confirm a successful connection
