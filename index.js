@@ -279,11 +279,20 @@ async function run() {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
 
-      const query = {_id: selectedClassDbID}
-      
-
+      const query = { _id: new ObjectId(payment.selectedClassDbID) };
       const deleteResult = await selectedClassesCollection.deleteOne(query);
-      res.send({ insertResult, deleteResult });
+
+      const filter = { _id: new ObjectId(payment.selectedClassId) };
+      const updateDoc = {
+        $inc: {
+          available_seats: -1,
+          enrolled_students: 1,
+        },
+      };
+
+      const updateResult = await classesCollection.updateOne(filter, updateDoc);
+
+      res.send({ insertResult, deleteResult, updateResult });
     });
 
     // Send a ping to confirm a successful connection
