@@ -63,7 +63,7 @@ async function run() {
     const selectedClassesCollection = client
       .db("linguaDB")
       .collection("selectedClasses");
-    const paymentCollection = client.db("linguaDB").collection("payment");
+    const paymentCollection = client.db("linguaDB").collection("payments");
 
     // JWT generate
     app.post("/jwt", async (req, res) => {
@@ -255,6 +255,36 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await selectedClassesCollection.deleteOne(query);
       res.send(result);
+    });
+
+    // enrolled classes
+    app.get("/enrolled-classess", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      console.log(email);
+      if (!email) {
+        return res.send([]);
+      }
+
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+
+      const queryEmail = { student_email: email };
+      const paymentResult = await paymentCollection.find(queryEmail).toArray();
+      const queryClasses = {
+        _id: {
+          $in: paymentResult.map(
+            (classItem) => new ObjectId(classItem.selectedClassId)
+          ),
+        },
+      };
+      const enrolledClassesResult = await classesCollection
+        .find(queryClasses)
+        .toArray();
+      res.send(enrolledClassesResult);
     });
 
     // create payment intent
