@@ -257,10 +257,10 @@ async function run() {
       res.send(result);
     });
 
-    // enrolled classes
-    app.get("/enrolled-classess", verifyJWT, async (req, res) => {
+    // payment and enrolled classes apis
+    app.get("/payment/enrolled-classess", verifyJWT, async (req, res) => {
       const email = req.query.email;
-      console.log(email);
+      // console.log(email);
       if (!email) {
         return res.send([]);
       }
@@ -272,19 +272,9 @@ async function run() {
           .send({ error: true, message: "forbidden access" });
       }
 
-      const queryEmail = { student_email: email };
-      const paymentResult = await paymentCollection.find(queryEmail).toArray();
-      const queryClasses = {
-        _id: {
-          $in: paymentResult.map(
-            (classItem) => new ObjectId(classItem.selectedClassId)
-          ),
-        },
-      };
-      const enrolledClassesResult = await classesCollection
-        .find(queryClasses)
-        .toArray();
-      res.send(enrolledClassesResult);
+      const query = { "enrolledClass.student_email": email };
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
     });
 
     // create payment intent
@@ -307,12 +297,19 @@ async function run() {
     // payment related api
     app.post("/payments", verifyJWT, async (req, res) => {
       const payment = req.body;
-      const insertResult = await paymentCollection.insertOne(payment);
+      const { transactionId, date, enrolledClass, selectedClassDbId } = payment;
+      const insertResult = await paymentCollection.insertOne({
+        transactionId,
+        date,
+        enrolledClass,
+      });
 
-      const query = { _id: new ObjectId(payment.selectedClassDbID) };
+      const query = { _id: new ObjectId(selectedClassDbId) };
       const deleteResult = await selectedClassesCollection.deleteOne(query);
 
-      const filter = { _id: new ObjectId(payment.selectedClassId) };
+      const filter = {
+        _id: new ObjectId(enrolledClass.selectedClassId),
+      };
       const updateDoc = {
         $inc: {
           available_seats: -1,
