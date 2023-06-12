@@ -181,7 +181,7 @@ async function run() {
       res.send(result);
     });
 
-    // Admin make instructor api
+    // Admin can make instructor api
     app.patch("/users/instructor/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -272,6 +272,50 @@ async function run() {
 
       const query = { student_email: email };
       const result = await selectedClassesCollection.find(query).toArray();
+      res.send(result);
+    });
+
+     // classes status chaning by admin api
+     app.patch("/classes/status/approve/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "approved",
+        },
+      };
+
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+    
+     // classes status chaning by admin api
+     app.patch("/classes/status/deny/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "denied",
+        },
+      };
+
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+     // classes feedback admin api
+     app.patch("/classes/feedback/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const body = req.body;
+      // console.log(id, body)
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          feedback: body.feedback,
+        },
+      };
+
+      const result = await classesCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
 
