@@ -216,6 +216,33 @@ async function run() {
       res.send(result);
     });
 
+    // instructor post classes
+    app.post("/classes", verifyJWT, verifyInstructor, async (req, res) => {
+      const newClass = req.body;
+      const result = await classesCollection.insertOne(newClass);
+      res.send(result);
+    });
+
+    // get instructor classes data by email
+    app.get("/instructor-classess", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      // console.log(email);
+      if (!email) {
+        return res.send([]);
+      }
+
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+
+      const query = { instructor_email: email };
+      const result = await classesCollection.find(query).toArray();
+      res.send(result);
+    });
+
     // selected class related apis
     app.post(
       "/selected-classess",
